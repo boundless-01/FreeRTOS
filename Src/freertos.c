@@ -25,7 +25,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "usart.h"
+#include "adc.h"
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -49,7 +51,8 @@
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 osThreadId TaskLed1Handle;
-osThreadId TsakLed2Handle;
+osThreadId TaskAdcHandle;
+osThreadId TaskUartHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -57,8 +60,9 @@ osThreadId TsakLed2Handle;
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
-void StartTask02(void const * argument);
-void StartTask03(void const * argument);
+void Start_led1_Task(void const * argument);
+void Start_adc_Task(void const * argument);
+void Start_uart_Task(void const * argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -110,12 +114,16 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of TaskLed1 */
-  osThreadDef(TaskLed1, StartTask02, osPriorityIdle, 0, 128);
+  osThreadDef(TaskLed1, Start_led1_Task, osPriorityIdle, 0, 128);
   TaskLed1Handle = osThreadCreate(osThread(TaskLed1), NULL);
 
-  /* definition and creation of TsakLed2 */
-  osThreadDef(TsakLed2, StartTask03, osPriorityIdle, 0, 128);
-  TsakLed2Handle = osThreadCreate(osThread(TsakLed2), NULL);
+  /* definition and creation of TaskAdc */
+  osThreadDef(TaskAdc, Start_adc_Task, osPriorityIdle, 0, 128);
+  TaskAdcHandle = osThreadCreate(osThread(TaskAdc), NULL);
+
+  /* definition and creation of TaskUart */
+  osThreadDef(TaskUart, Start_uart_Task, osPriorityIdle, 0, 128);
+  TaskUartHandle = osThreadCreate(osThread(TaskUart), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -141,42 +149,70 @@ void StartDefaultTask(void const * argument)
   /* USER CODE END StartDefaultTask */
 }
 
-/* USER CODE BEGIN Header_StartTask02 */
+/* USER CODE BEGIN Header_Start_led1_Task */
 /**
 * @brief Function implementing the TaskLed1 thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartTask02 */
-void StartTask02(void const * argument)
+/* USER CODE END Header_Start_led1_Task */
+void Start_led1_Task(void const * argument)
 {
-  /* USER CODE BEGIN StartTask02 */
+  /* USER CODE BEGIN Start_led1_Task */
   /* Infinite loop */
   for(;;)
   {
-		HAL_GPIO_TogglePin (GPIOA, GPIO_PIN_6);
-    osDelay(200);
+    osDelay(1);
   }
-  /* USER CODE END StartTask02 */
+  /* USER CODE END Start_led1_Task */
 }
 
-/* USER CODE BEGIN Header_StartTask03 */
+/* USER CODE BEGIN Header_Start_adc_Task */
 /**
-* @brief Function implementing the TsakLed2 thread.
+* @brief Function implementing the TaskAdc thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartTask03 */
-void StartTask03(void const * argument)
+/* USER CODE END Header_Start_adc_Task */
+void Start_adc_Task(void const * argument)
 {
-  /* USER CODE BEGIN StartTask03 */
+  /* USER CODE BEGIN Start_adc_Task */
+	float adc_v = 0.f;
+	char buffer[20] = {0};
   /* Infinite loop */
   for(;;)
   {
-		HAL_GPIO_TogglePin (GPIOA, GPIO_PIN_7);
-    osDelay(1000);
+		HAL_ADC_Start(&hadc1);
+		if(HAL_ADC_PollForConversion (&hadc1 , 30) == HAL_OK)
+		{
+			adc_v = HAL_ADC_GetValue(&hadc1) / 4095.f * 3.3;
+		}
+		HAL_ADC_Start(&hadc1);
+		snprintf(buffer, 20, "V:\t%.2f\n", adc_v);
+		HAL_UART_Transmit(&huart1, (uint8_t *)buffer, 20, 10);
+    osDelay(10);
   }
-  /* USER CODE END StartTask03 */
+  /* USER CODE END Start_adc_Task */
+}
+
+/* USER CODE BEGIN Header_Start_uart_Task */
+/**
+* @brief Function implementing the TaskUart thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_Start_uart_Task */
+void Start_uart_Task(void const * argument)
+{
+  /* USER CODE BEGIN Start_uart_Task */
+	uint8_t Txdata[20] = "transmit !!!\n";
+  /* Infinite loop */
+  for(;;)
+  {
+		//HAL_UART_Transmit(&huart1, Txdata, 20, 10);
+    osDelay(1);
+  }
+  /* USER CODE END Start_uart_Task */
 }
 
 /* Private application code --------------------------------------------------*/
