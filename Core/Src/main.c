@@ -31,9 +31,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-uint32_t led1time = 0;
-//uint32_t led2time = 0;
-//float adc = 0.f;
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -93,17 +91,15 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_USART1_UART_Init();
-  MX_TIM3_Init();
   MX_ADC1_Init();
+  MX_TIM3_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-	
+
   /* USER CODE END 2 */
 
   /* Init scheduler */
-  osKernelInitialize();
-
-  /* Call init function for freertos objects (in cmsis_os2.c) */
+  osKernelInitialize();  /* Call init function for freertos objects (in cmsis_os2.c) */
   MX_FREERTOS_Init();
 
   /* Start scheduler */
@@ -175,11 +171,7 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-//void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
-//{
-//	adc = HAL_ADC_GetValue(&hadc1) / 4095.f * 3.3;
-//	HAL_ADC_Start_IT(&hadc1);
-//}
+
 /* USER CODE END 4 */
 
 /**
@@ -200,11 +192,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-	if(htim->Instance == TIM3)
-	{
-		led1time++;
-		led2time++;
-	}
+
   /* USER CODE END Callback 1 */
 }
 
@@ -222,8 +210,7 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.

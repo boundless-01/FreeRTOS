@@ -136,7 +136,6 @@ void UsageFault_Handler(void)
   while (1)
   {
     /* USER CODE BEGIN W1_UsageFault_IRQn 0 */
-		
     /* USER CODE END W1_UsageFault_IRQn 0 */
   }
 }
