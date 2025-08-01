@@ -25,7 +25,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "adc.h"
+#include "usart.h"
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -202,10 +204,20 @@ void Start_led1_Task(void *argument)
 void Start_adc_Task(void *argument)
 {
   /* USER CODE BEGIN Start_adc_Task */
+  float adc_v = 0.f;
+	char buffer[20] = {0};
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+		HAL_ADC_Start(&hadc1);
+		if(HAL_ADC_PollForConversion (&hadc1 , 30) == HAL_OK)
+		{
+			adc_v = HAL_ADC_GetValue(&hadc1) / 4095.f * 3.3;
+		}
+		HAL_ADC_Start(&hadc1);
+		snprintf(buffer, 20, "V:\t%.2f\n", adc_v);
+		//HAL_UART_Transmit(&huart1, (uint8_t *)buffer, 20, 10);
+    osDelay(10);
   }
   /* USER CODE END Start_adc_Task */
 }
@@ -220,9 +232,11 @@ void Start_adc_Task(void *argument)
 void Start_usart_Task(void *argument)
 {
   /* USER CODE BEGIN Start_usart_Task */
+  uint8_t Txdata[20] = "transmit !!!\n";
   /* Infinite loop */
   for(;;)
   {
+		HAL_UART_Transmit(&huart1, Txdata, 20, 10);
     osDelay(1);
   }
   /* USER CODE END Start_usart_Task */
