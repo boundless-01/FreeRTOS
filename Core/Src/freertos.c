@@ -28,11 +28,12 @@
 #include "adc.h"
 #include "usart.h"
 #include "stdio.h"
+#include "string.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+#define MEDIAN_SIZE 11  // 建议奇数（3/5/7）
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -205,6 +206,12 @@ void Start_adc_Task(void *argument)
 {
   /* USER CODE BEGIN Start_adc_Task */
   float adc_v = 0.f;
+	float current = 0.f;
+	float z_adc_v = 0.f;
+	float z_current = 0.f;
+		float adc_buffer[MEDIAN_SIZE] = {0};
+    uint8_t adc_index = 0;
+    float tempBuffer[MEDIAN_SIZE];
 	char buffer[20] = {0};
   /* Infinite loop */
   for(;;)
@@ -215,8 +222,38 @@ void Start_adc_Task(void *argument)
 			adc_v = HAL_ADC_GetValue(&hadc1) / 4095.f * 3.3;
 		}
 		HAL_ADC_Start(&hadc1);
-		snprintf(buffer, 20, "V:\t%.2f\n", adc_v);
-		//HAL_UART_Transmit(&huart1, (uint8_t *)buffer, 20, 10);
+		current = (adc_v - 2.475)/0.066 ;
+		
+		snprintf(buffer, 20, "V: %.2f\t", adc_v);
+		HAL_UART_Transmit(&huart1, (uint8_t *)buffer, 20, 10);
+		snprintf(buffer, 20, "I: %.2f\t", current);
+		HAL_UART_Transmit(&huart1, (uint8_t *)buffer, 20, 10);
+		
+		adc_buffer[adc_index++] = adc_v;
+    adc_index %= MEDIAN_SIZE;
+    
+    // 复制并排序
+    memcpy(tempBuffer, adc_buffer, sizeof(adc_buffer));
+    for (int i = 0; i < MEDIAN_SIZE - 1; i++) {
+        for (int j = i + 1; j < MEDIAN_SIZE; j++) {
+            if (tempBuffer[i] > tempBuffer[j]) {
+                float temp = tempBuffer[i];
+                tempBuffer[i] = tempBuffer[j];
+                tempBuffer[j] = temp;
+            }
+        }
+    }
+		
+		if(adc_index >= MEDIAN_SIZE)
+		{
+			z_adc_v = tempBuffer[(MEDIAN_SIZE+1) / 2];  // 返回中位数
+			z_current = (z_adc_v - 2.475)/0.066 ;
+		}
+		
+		snprintf(buffer, 20, "zV:\t%.2f\t", z_adc_v);
+		HAL_UART_Transmit(&huart1, (uint8_t *)buffer, 20, 10);
+		snprintf(buffer, 20, "zI:\t%.2f\n", z_current);
+		HAL_UART_Transmit(&huart1, (uint8_t *)buffer, 20, 10);
     osDelay(10);
   }
   /* USER CODE END Start_adc_Task */
@@ -236,7 +273,7 @@ void Start_usart_Task(void *argument)
   /* Infinite loop */
   for(;;)
   {
-		HAL_UART_Transmit(&huart1, Txdata, 20, 10);
+		//HAL_UART_Transmit(&huart1, Txdata, 20, 10);
     osDelay(1);
   }
   /* USER CODE END Start_usart_Task */
